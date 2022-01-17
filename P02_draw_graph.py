@@ -2,7 +2,8 @@
 P02_draw_graph.py
 
 SQLite-DBを読み込み、グラフを描く
-作成　2022-01-15　村井智哉
+作成    2022-01-15  村井智哉
+更新    2022-01-17  村井智哉
 
 入力DB      'ListFinder.sqlite3'
             アクセスログ テーブル 'accesslog'
@@ -43,19 +44,22 @@ SQLite-DBを読み込み、グラフを描く
                 = 'www.tktk.co.jp/en/product/ev-charging/conditioner-ev/%'
             
 """
-#%%
+# %%
+from time import strftime
+import pandas as pd
+from datetime import datetime
 import sqlite3
 
 dbpath = "ListFinder.sqlite3"
 
-#%%
+# %%
 # 前処理0 全ての行を対象とする
 
 with sqlite3.connect(dbpath) as conn:
     conn.execute("UPDATE accesslog "\
         + "SET 対象=? ",(1,))
 
-#%%
+# %%
 # 前処理1(a)URLが東光高岳である行を対象外とする
 
 with sqlite3.connect(dbpath) as conn:
@@ -64,7 +68,7 @@ with sqlite3.connect(dbpath) as conn:
         + "WHERE URL='https://www.tktk.co.jp/'",\
         (0,))
 
-#%%
+# %%
 # 前処理1(b)URLがNANである行は対象とする
 
 with sqlite3.connect(dbpath) as conn:
@@ -91,109 +95,166 @@ with sqlite3.connect(dbpath) as conn:
 #         'V2H_J参照数', 'V2H_E1参照数', 'V2H_E2参照数']
 # df = pd.DataFrame(index=[], columns=cols)
 
-#%%
+# %%
 # (a)全体_参照数
 #   条件なし
-import pandas as pd
 
 with sqlite3.connect(dbpath) as conn:
-    df = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS '全体_参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 "\
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS '全体_参照数'
+        FROM accesslog
+        WHERE 対象 = 1
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_ALL = pd.read_sql(SQL, con=conn)
 
-df.head()
+df_ALL
 
-#%%
+# %%
 # (b)QC_J参照数   
 #   流入ページURL = 'www.tktk.co.jp/product/ev/quickcharger/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_QCJ = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'QC_J参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/product/ev/quickcharger/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'QC_J参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE
+            'www.tktk.co.jp/product/ev/quickcharger/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_QCJ = pd.read_sql(SQL, con=conn)
 df_QCJ
 
-#%%
+# %%
 # (c)QC_E1参照数  
 #   流入ページURL = 'www.tktk.co.jp/en/product/ev/quickcharger/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_QCE1 = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'QC_E1参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/en/product/ev/quickcharger/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'QC_E1参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE 
+            'www.tktk.co.jp/en/product/ev/quickcharger/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_QCE1 = pd.read_sql(SQL, con=conn)
 df_QCE1
 
 
-#%%
+# %%
 # (d)QC_E2参照数  
 #   流入ページURL = 'www.tktk.co.jp/en/product/ev-charging/quickcharger/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_QCE2 = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'QC_E2参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/en/product/ev-charging/quickcharger/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'QC_E2参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE
+            'www.tktk.co.jp/en/product/ev-charging/quickcharger/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_QCE2 = pd.read_sql(SQL, con=conn)
 df_QCE2
 
-#%%
+# %%
 # (e)V2H_J参照数
 #   流入ページURL = 'www.tktk.co.jp/product/ev/conditioner-ev/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_V2HJ = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'V2H_J参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/product/ev/conditioner-ev/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'V2H_J参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE
+            'www.tktk.co.jp/product/ev/conditioner-ev/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_V2HJ = pd.read_sql(SQL, con=conn)
 df_V2HJ
 
-#%%
+# %%
 # (f)V2H_E1参照数
 #   流入ページURL = 'www.tktk.co.jp/en/product/ev/conditioner-ev/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_V2HE1 = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'V2H_E1参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/en/product/ev/conditioner-ev/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'V2H_E1参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE
+            'www.tktk.co.jp/en/product/ev/conditioner-ev/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_V2HE1 = pd.read_sql(SQL, con=conn)
 df_V2HE1
 
-#%%
+# %%
 # (g)V2H_E2参照数
 #   流入ページURL = 'www.tktk.co.jp/en/product/ev-charging/conditioner-ev/%'
 
 with sqlite3.connect(dbpath) as conn:
-    df_V2HE2 = pd.read_sql(
-        "SELECT strftime('%Y-%m', 日時) AS '年月',"\
-        + "count(日時) AS 'V2H_E2参照数' "\
-        + "FROM accesslog "\
-        + "WHERE 対象 = 1 AND "\
-        + "流入ページURL LIKE 'www.tktk.co.jp/en/product/ev-charging/conditioner-ev/%' "
-        + "GROUP BY strftime('%Y-%m', 日時) ", con=conn)
+    SQL = """
+        SELECT
+            strftime('%Y-%m', 日時) AS '年月',
+            count(日時) AS 'V2H_E2参照数'
+        FROM accesslog
+        WHERE 対象 = 1 AND
+            流入ページURL LIKE
+            'www.tktk.co.jp/en/product/ev-charging/conditioner-ev/%'
+        GROUP BY strftime('%Y-%m', 日時);
+    """
+    df_V2HE2 = pd.read_sql(SQL, con=conn)
 df_V2HE2
 
-#%%
-from dateutil.parser import parse
+# %%
+# 参照数を連結する
 
-parse('Jan 31, 1997 10:45 PM')
+columns = {"月末"}
+df = pd.DataFrame(
+    pd.date_range(
+        '2019-02-01', '2021-09-30', freq='M'),
+    columns=columns
+    )
+df
+
+#%%
+df['年月'] = df['月末'].dt.strftime('%Y-%m')
+
+df = pd.merge(df, df_ALL, on='年月', how='left')
+df = pd.merge(df, df_QCJ, on='年月', how='left')
+df = pd.merge(df, df_QCE1, on='年月', how='left')
+df = pd.merge(df, df_QCE2, on='年月', how='left')
+df = pd.merge(df, df_V2HJ, on='年月', how='left')
+df = pd.merge(df, df_V2HE1, on='年月', how='left')
+df = pd.merge(df, df_V2HE2, on='年月', how='left')
+
+df['QC参照数'] \
+    = df['QC_J参照数'].fillna(0) \
+    + df['QC_E1参照数'].fillna(0) \
+    + df['QC_E2参照数'].fillna(0)
+
+df['V2H参照数'] \
+    = df['V2H_J参照数'].fillna(0) \
+    + df['V2H_E1参照数'].fillna(0) \
+    + df['V2H_E2参照数'].fillna(0)
+
+df
+# %%
+df['QC_J参照数']
 
 # %%

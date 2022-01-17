@@ -49,6 +49,7 @@ from time import strftime
 import pandas as pd
 from datetime import datetime
 import sqlite3
+import matplotlib.pyplot as plt
 
 dbpath = "ListFinder.sqlite3"
 
@@ -228,6 +229,8 @@ columns = {"月末"}
 df = pd.DataFrame(
     pd.date_range(
         '2019-02-01', '2021-09-30', freq='M'),
+    index=pd.date_range(
+        '2019-02-01', '2021-09-30', freq='M'),
     columns=columns
     )
 df
@@ -255,6 +258,17 @@ df['V2H参照数'] \
 
 df
 # %%
-df['QC_J参照数']
+plt.rcParams['font.family'] = 'IPAexGothic'
+plt.title('TKTK-WebPage月別参照数')
+plt.xlabel('年月')
+plt.ylabel('参照数')
+plt.plot(df['年月'],df['全体_参照数'], label='全体')
+plt.plot(df['年月'],df['QC参照数'], label='QC')
+plt.plot(df['年月'],df['V2H参照数'], label='V2H')
+plt.xticks([1, 4, 7, 10, 13, 16, 
+    19, 22, 25, 28], rotation=90)
+plt.legend()
+plt.style.use('bmh')
 
 # %%
+# 全体、QC合計、V2H合計の参照数を比較するグラフを描く
